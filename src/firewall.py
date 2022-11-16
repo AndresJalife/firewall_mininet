@@ -1,7 +1,7 @@
 from pox.core import core
 import pox.openflow.libopenflow_01 as of
 from pox.lib.revent import *
-from pox.lib.util import dpidToStr
+from pox.lib.util import dpid_to_str
 from pox.lib.addresses import EthAddr, IPAddr
 import pox.lib.packet as pkt
 from collections import namedtuple
@@ -10,11 +10,11 @@ import csv
 
 log = core.getLogger()
 
-class Firewall(EventMixin):
+class Firewall(object):
     POLICY_FILE = "./policy.csv"
 
     def __init__(self):
-        self.listenTo(core.openflow)
+        core.openflow.addListeners(self)
         self.rules = []
         for rule in Firewall.read_rules():
             self.add_rule(*rule)
@@ -24,7 +24,7 @@ class Firewall(EventMixin):
         self.process_packet(event)
 
     @staticmethod
-    def matches_rules(packet, rule):
+    def matches_rule(packet, rule):
         ip_packet = packet.find('ipv4')
         log.debug(ip_packet)
         log.debug(packet)
@@ -35,13 +35,15 @@ class Firewall(EventMixin):
                (ip_packet.dstport == rule['dstport'] or '*' == rule['dstport']) and is_protocol
 
     def check_rules(self, packet):
-        return any(self.matches_rule(packet, rule) for rule in self.rules)
+        return any(Firewall.matches_rule(packet, rule) for rule in self.rules)
 
     def process_packet(self, event):
-        if self.check_rules(event.parsed):
-            #self.dropPacket(event)
-            return
-        #self.sendFlowMod(msg, event)
+        pass
+        #if self.check_rules(event.parsed):
+        #    msg = self.drop_packet(event)
+        #else:
+        #    msg = self.send_packet(event)
+        #event.connection.send(msg)
     def add_rule(self, src, dst, srcport, dstport, protocol):
         self.rules.append({
             'src': src,
@@ -64,11 +66,7 @@ class Firewall(EventMixin):
         return rules
 
     def _handle_ConnectionUp(self, event):
-        event.connection.addListeners(self)
-        log.debug("El Firewall se instalo en %s", dpidToStr(event.dpid))
+        log.debug("El Firewall se instalo en %s", dpid_to_str(event.dpid))
 
-def launch ():
-    '''
-    Starting the Firewall module
-    '''
+def launch():
     core.registerNew(Firewall)
