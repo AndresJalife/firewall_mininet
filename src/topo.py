@@ -16,7 +16,7 @@ class Topologia(Topo):
 
         switches = []
         for i in range(self.switch_count):
-            switches.append(self.addSwitch(f'switch_{i}'))
+            switches.append(self.addSwitch('switch_{switch_nmb}'.format(switch_nmb=i + 1)))
 
         self.addLink(h1_1, switches[0])
         self.addLink(h1_2, switches[0])
@@ -24,6 +24,7 @@ class Topologia(Topo):
         self.addLink(switches[-1], h2_2)
 
         for i in range(1, self.switch_count):
-            self.addLink(switches[i-1], switches[i])
+            self.addLink(switches[i - 1], switches[i])
 
-topos = {'customTopo' : lambda: Topologia(2) }
+
+topos = {'customTopo': lambda: Topologia(2)}

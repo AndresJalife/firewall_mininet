@@ -1,2 +1,2 @@
 src,dst,srcport,dstport,protocol
-*,*,100,100,UDP
+10.0.0.1,10.0.0.4,*,*,ICMP
