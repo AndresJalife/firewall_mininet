@@ -12,6 +12,7 @@ class Firewall(object):
 
     def __init__(self):
         core.openflow.addListeners(self)
+        self.rules_applied = False
         self.rule_msgs = []
         for rule in Firewall.read_rules():
             self.add_rule(*rule)
@@ -40,12 +41,14 @@ class Firewall(object):
         return rules
 
     def _handle_ConnectionUp(self, event):
-        self._set_rules_to_connection(event.connection)
+        if not self.rules_applied:
+            self._set_rules_to_connection(event.connection)
         log.debug("El Firewall se instalo en %s", dpid_to_str(event.dpid))
 
     def _set_rules_to_connection(self, connection):
         for rule_msg in self.rule_msgs:
             connection.send(rule_msg)
+        self.rules_applied = True
 
     def _create_rule_msg(self, rule):
         msg = of.ofp_flow_mod()
