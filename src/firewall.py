@@ -5,20 +5,27 @@ from pox.lib.addresses import EthAddr, IPAddr
 import pox.lib.packet as pkt
 import csv
 
+"""
+Firewall implemented for pox controller.
+Reads rules from a policy file and sets them in the first switch that connects.
+"""
+
 log = core.getLogger()
 
 class Firewall(object):
     POLICY_FILE = "./policy.csv"
 
     def __init__(self):
+        """Connects to openflow and creates the rule messages."""
         core.openflow.addListeners(self)
         self.rules_applied = False
         self.rule_msgs = []
         for rule in Firewall.read_rules():
-            self.add_rule(*rule)
+            self.add_rule_message(*rule)
         log.debug("Iniciando modulo de Firewall")
 
-    def add_rule(self, src, dst, srcport, dstport, protocol):
+    def add_rule_message(self, src, dst, srcport, dstport, protocol):
+        """Creates a rule message and saves it"""
         rule = {
             'src': src,
             'dst': dst,
@@ -30,6 +37,7 @@ class Firewall(object):
 
     @staticmethod
     def read_rules():
+        """Returns all the rules from the POLICY_FILE"""
         rules = []
         with open(Firewall.POLICY_FILE, 'r') as f:
             reader = csv.reader(f)
@@ -41,16 +49,19 @@ class Firewall(object):
         return rules
 
     def _handle_ConnectionUp(self, event):
+        """Sets the rules to the first connection"""
         if not self.rules_applied:
             self._set_rules_to_connection(event.connection)
         log.debug("El Firewall se instalo en %s", dpid_to_str(event.dpid))
 
     def _set_rules_to_connection(self, connection):
+        """Sets all the rules to one conecction"""
         for rule_msg in self.rule_msgs:
             connection.send(rule_msg)
         self.rules_applied = True
 
     def _create_rule_msg(self, rule):
+        """Creates a rule message"""
         msg = of.ofp_flow_mod()
         match = of.ofp_match(dl_type=pkt.ethernet.IP_TYPE)
         if rule['protocol'] != '*':
@@ -67,6 +78,7 @@ class Firewall(object):
         return msg
 
     def _get_rule_protocol(self, proto):
+        """Parses a protocol to openflow format"""
         if proto == 'TCP':
             return pkt.ipv4.TCP_PROTOCOL
         elif proto == 'UDP':
