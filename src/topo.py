@@ -1,6 +1,5 @@
 from mininet.topo import Topo
 
-
 class Topologia(Topo):
 
     def __init__(self, switch_count):
@@ -27,4 +26,4 @@ class Topologia(Topo):
             self.addLink(switches[i - 1], switches[i])
 
 
-topos = {'customTopo': lambda: Topologia(2)}
+topos = {'customTopo': lambda: Topologia(3)}

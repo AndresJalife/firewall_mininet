@@ -12,13 +12,14 @@ Reads rules from a policy file and sets them in the first switch that connects.
 
 log = core.getLogger()
 
+
 class Firewall(object):
     POLICY_FILE = "./policy.csv"
+    SWITCH_FIREWALL_ID = 1
 
     def __init__(self):
         """Connects to openflow and creates the rule messages."""
         core.openflow.addListeners(self)
-        self.rules_applied = False
         self.rule_msgs = []
         for rule in Firewall.read_rules():
             self.add_rule_message(*rule)
@@ -50,7 +51,7 @@ class Firewall(object):
 
     def _handle_ConnectionUp(self, event):
         """Sets the rules to the first connection"""
-        if not self.rules_applied:
+        if event.connection.dpid == self.SWITCH_FIREWALL_ID:
             self._set_rules_to_connection(event.connection)
         log.debug("El Firewall se instalo en %s", dpid_to_str(event.dpid))
 
@@ -58,7 +59,6 @@ class Firewall(object):
         """Sets all the rules to one conecction"""
         for rule_msg in self.rule_msgs:
             connection.send(rule_msg)
-        self.rules_applied = True
 
     def _create_rule_msg(self, rule):
         """Creates a rule message"""
