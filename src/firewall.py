@@ -27,14 +27,7 @@ class Firewall(object):
 
     def add_rule_message(self, src, dst, srcport, dstport, protocol):
         """Creates a rule message and saves it"""
-        rule = {
-            'src': src,
-            'dst': dst,
-            'srcport': srcport,
-            'dstport': dstport,
-            'protocol': protocol,
-        }
-        self.rule_msgs.append(self._create_rule_msg(rule))
+        self.rule_msgs.append(self._create_rule_msg(src, dst, srcport, dstport, protocol))
 
     @staticmethod
     def read_rules():
@@ -60,20 +53,20 @@ class Firewall(object):
         for rule_msg in self.rule_msgs:
             connection.send(rule_msg)
 
-    def _create_rule_msg(self, rule):
+    def _create_rule_msg(self, src, dst, srcport, dstport, protocol):
         """Creates a rule message"""
         msg = of.ofp_flow_mod()
         match = of.ofp_match(dl_type=pkt.ethernet.IP_TYPE)
-        if rule['protocol'] != '*':
-            match.nw_proto = self._get_rule_protocol(rule['protocol'])
-        if rule['src'] != '*':
-            match.nw_src = IPAddr(rule['src'])
-        if rule['dst'] != '*':
-            match.nw_dst = IPAddr(rule['dst'])
-        if rule['srcport'] != '*':
-            match.tp_src = int(rule['srcport'])
-        if rule['dstport'] != '*':
-            match.tp_dst = int(rule['dstport'])
+        if protocol != '*':
+            match.nw_proto = self._get_rule_protocol(protocol)
+        if src != '*':
+            match.nw_src = IPAddr(src)
+        if dst != '*':
+            match.nw_dst = IPAddr(dst)
+        if srcport != '*':
+            match.tp_src = int(srcport)
+        if dstport != '*':
+            match.tp_dst = int(dstport)
         msg.match = match
         return msg
 
